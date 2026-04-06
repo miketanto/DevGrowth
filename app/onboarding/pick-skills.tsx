@@ -90,7 +90,7 @@ export default function PickSkillsScreen() {
     );
 
     // Navigate to main app
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/today');
   }, [selected, saving, db, ensureSkill, router]);
 
   return (
