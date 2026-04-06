@@ -25,18 +25,18 @@ export default function WelcomeScreen() {
 
       {/* Title */}
       <Text style={styles.title}>DevGrowth</Text>
-      <Text style={styles.tagline}>REVIEW YOUR MOVES. LEVEL UP.</Text>
+      <Text style={styles.tagline}>JOURNAL. REFLECT. GROW.</Text>
 
       {/* Description */}
       <Text style={styles.description}>
-        A chess engine for your coding day. Log what you built, let AI review
-        your moves, and watch your skills level up.
+        A growth journal for your coding day. Log what you built, reflect with
+        AI-guided prompts, and watch your skills level up.
       </Text>
 
       {/* CTA */}
       <View style={[styles.ctaWrap, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Button
-          title="Start your first review →"
+          title="Start journaling →"
           onPress={() => router.push('/onboarding/how-it-works')}
           style={styles.ctaButton}
           textStyle={styles.ctaText}

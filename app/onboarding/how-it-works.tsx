@@ -23,7 +23,7 @@ const STEPS = [
   {
     icon: ChatIcon,
     iconColor: colors.blue,
-    label: 'AI reviews your moves',
+    label: 'AI guides your reflection',
     desc: 'Contextual follow-up questions',
     labelColor: colors.blue,
   },
@@ -54,7 +54,7 @@ export default function HowItWorksScreen() {
       {/* Header */}
       <Text style={styles.label}>HOW IT WORKS</Text>
       <Text style={styles.title}>
-        Your daily game review,{'\n'}
+        Your daily growth journal,{'\n'}
         <Text style={styles.titleAccent}>in 5 minutes</Text>
       </Text>
 

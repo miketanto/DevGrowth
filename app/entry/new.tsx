@@ -6,6 +6,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Pressable,
+  Keyboard,
   Platform,
   Alert,
   StyleSheet,
@@ -54,7 +55,7 @@ export default function NewEntryScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Pressable style={styles.flex} onPress={() => {}}>
+      <Pressable style={styles.flex} onPress={Keyboard.dismiss}>
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.scroll}
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingTop: spacing['4xl'],
-    paddingBottom: spacing['4xl'],
+    paddingBottom: 120,
   },
   field: {
     paddingHorizontal: spacing['2xl'],
