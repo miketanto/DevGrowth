@@ -71,6 +71,7 @@ export default function ReviewScreen() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sequence, setSequence] = useState(0);
+  const [scoreData, setScoreData] = useState<string | null>(null);
 
   const entryId = activeEntry?.id ?? '';
 
@@ -258,6 +259,12 @@ export default function ReviewScreen() {
         await setOverallLevel(db, newLevel);
       }
 
+      setScoreData(JSON.stringify({
+        scores: scoreResult.scores,
+        xp_breakdown: xpBreakdown,
+        extracted_skills: skills,
+        summary: scoreResult.summary,
+      }));
       setPhase('complete');
     } catch (e) {
       setPhase('error');
@@ -273,8 +280,8 @@ export default function ReviewScreen() {
 
   // -- Navigate to score screen --
   const handleViewResults = useCallback(() => {
-    router.replace('/entry/score');
-  }, [router]);
+    router.replace({ pathname: '/entry/score', params: { data: scoreData ?? '' } });
+  }, [router, scoreData]);
 
   // Guard: no active entry
   if (!activeEntry) {

@@ -138,7 +138,7 @@ export default function ScoreScreen() {
       >
         <Button
           title="Done"
-          onPress={() => router.replace('/(tabs)')}
+          onPress={() => router.replace('/(tabs)/today')}
           style={styles.doneButton}
         />
       </Animated.View>
