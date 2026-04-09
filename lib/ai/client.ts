@@ -38,7 +38,15 @@ export async function callClaude(
   messages: ClaudeMessage[]
 ): Promise<AIClientResult> {
   const config = getModelConfig(task);
-  const apiKey = getApiKey();
+
+  let apiKey: string;
+  try {
+    apiKey = getApiKey();
+    console.log(`[AI] API key found: ${apiKey.slice(0, 10)}...${apiKey.slice(-4)}`);
+  } catch (e) {
+    console.error('[AI] API key error:', e);
+    throw e;
+  }
 
   const body = {
     model: config.modelId,
@@ -54,22 +62,33 @@ export async function callClaude(
     messages,
   };
 
+  console.log(`[AI] >>> ${task} | model: ${config.modelId} | messages: ${messages.length}`);
+  console.log(`[AI] >>> system (${system.length} chars):`, system.slice(0, 100) + '...');
+  console.log(`[AI] >>> user:`, messages[0]?.content?.slice(0, 200) + '...');
+
   const start = Date.now();
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': API_VERSION,
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': API_VERSION,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    console.error(`[AI] !!! Network error for ${task}:`, e);
+    throw e;
+  }
 
   const latencyMs = Date.now() - start;
 
   if (!response.ok) {
     const errorBody = await response.text();
+    console.error(`[AI] !!! HTTP ${response.status} for ${task}:`, errorBody);
     throw new Error(`Claude API error (${response.status}): ${errorBody}`);
   }
 
@@ -78,6 +97,9 @@ export async function callClaude(
   const inputTokens = data.usage.input_tokens;
   const outputTokens = data.usage.output_tokens;
   const cacheHit = (data.usage.cache_read_input_tokens ?? 0) > 0;
+
+  console.log(`[AI] <<< ${task} | ${latencyMs}ms | in:${inputTokens} out:${outputTokens} | cache:${cacheHit}`);
+  console.log(`[AI] <<< response (${text.length} chars):`, text.slice(0, 300));
 
   logCost({
     task_type: task,
