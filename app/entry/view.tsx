@@ -7,12 +7,13 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { ScoreRing } from '../../components/ScoreRing';
+import { ReviewConversation } from '../../components/ReviewConversation';
 import { useEntryStore } from '../../store/useEntryStore';
-import { getEntry, getEntrySkills } from '../../lib/database';
+import { getEntry, getEntrySkills, getReviewMessages } from '../../lib/database';
 import { colors } from '../../theme/colors';
 import { fontFamily, fontSize } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
-import type { Entry, Skill, SkillBranch } from '../../types';
+import type { Entry, ReviewMessage, Skill, SkillBranch } from '../../types';
 
 const MOOD_LABELS = ['Rough', 'Meh', 'Okay', 'Good', 'Flow'];
 const CONFIDENCE_LABELS = ['1 — Lost', '2 — Shaky', '3 — Steady', '4 — Strong', '5 — Nailed it'];
@@ -33,6 +34,7 @@ export default function EntryViewScreen() {
 
   const [entry, setEntry] = useState<Entry | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [reviewMessages, setReviewMessages] = useState<ReviewMessage[]>([]);
 
   useEffect(() => {
     if (!entryId) return;
@@ -40,8 +42,12 @@ export default function EntryViewScreen() {
       const e = await getEntry(db, entryId);
       setEntry(e);
       if (e) {
-        const s = await getEntrySkills(db, entryId);
+        const [s, msgs] = await Promise.all([
+          getEntrySkills(db, entryId),
+          getReviewMessages(db, entryId),
+        ]);
         setSkills(s);
+        setReviewMessages(msgs);
       }
     })();
   }, [db, entryId]);
@@ -49,6 +55,19 @@ export default function EntryViewScreen() {
   if (!entry) return null;
 
   const hasReview = entry.review_score != null && entry.review_score.composite > 0;
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = entry.date === today;
+
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   const handleStartReview = async () => {
     const { setActiveEntry } = useEntryStore.getState();
@@ -76,8 +95,8 @@ export default function EntryViewScreen() {
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader
-        title="Today's Entry"
-        subtitle={entry.date}
+        title={isToday ? "Today's Entry" : 'Entry'}
+        subtitle={formatDate(entry.date)}
         onBack={() => router.back()}
       />
 
@@ -118,8 +137,8 @@ export default function EntryViewScreen() {
         </View>
       </View>
 
-      {/* Edit button (only before review) */}
-      {!hasReview && (
+      {/* Edit button (only for today's entry, before review) */}
+      {isToday && !hasReview && (
         <View style={styles.section}>
           <Button
             title="Edit Entry"
@@ -147,8 +166,11 @@ export default function EntryViewScreen() {
             </View>
           </View>
 
+          <ReviewConversation messages={reviewMessages} />
+
           {entry.ai_summary && (
             <View style={styles.section}>
+              <Text style={styles.label}>AI SUMMARY</Text>
               <Card>
                 <Text style={styles.bodyText}>{entry.ai_summary}</Text>
               </Card>
@@ -172,7 +194,7 @@ export default function EntryViewScreen() {
             </View>
           )}
         </>
-      ) : (
+      ) : isToday ? (
         <>
           <View style={styles.divider} />
           <View style={styles.section}>
@@ -189,7 +211,7 @@ export default function EntryViewScreen() {
             </Card>
           </View>
         </>
-      )}
+      ) : null}
     </ScrollView>
   );
 }
