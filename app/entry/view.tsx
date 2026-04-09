@@ -56,6 +56,19 @@ export default function EntryViewScreen() {
     router.push('/entry/review');
   };
 
+  const handleEditEntry = () => {
+    const { updateDraft } = useEntryStore.getState();
+    updateDraft({
+      date: entry.date,
+      worked_on: entry.worked_on,
+      hardest_problem: entry.hardest_problem,
+      how_solved: entry.how_solved,
+      confidence: entry.confidence,
+      mood: entry.mood,
+    });
+    router.push({ pathname: '/entry/new', params: { editId: entry.id } });
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -104,6 +117,17 @@ export default function EntryViewScreen() {
           <Text style={styles.metaValue}>{MOOD_LABELS[entry.mood]}</Text>
         </View>
       </View>
+
+      {/* Edit button (only before review) */}
+      {!hasReview && (
+        <View style={styles.section}>
+          <Button
+            title="Edit Entry"
+            onPress={handleEditEntry}
+            variant="secondary"
+          />
+        </View>
+      )}
 
       {/* Review section */}
       {hasReview ? (

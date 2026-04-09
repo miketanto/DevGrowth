@@ -11,7 +11,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
 import { Button } from '../../components/ui/Button';
@@ -25,11 +25,13 @@ import { spacing, radius } from '../../theme/spacing';
 
 export default function NewEntryScreen() {
   const router = useRouter();
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
   const db = useSQLiteContext();
   const { draft, updateDraft, submitEntry, loading } = useEntryStore();
   const recordEntry = useUserStore((s) => s.recordEntry);
   const [submitted, setSubmitted] = useState(false);
 
+  const isEditing = !!editId;
   const today = new Date().toISOString().split('T')[0];
 
   const canSubmit = draft.worked_on.trim().length > 0;
@@ -39,11 +41,24 @@ export default function NewEntryScreen() {
     setSubmitted(true);
 
     try {
-      // Set today's date on draft before submitting
-      updateDraft({ date: today });
-      await submitEntry(db);
-      await recordEntry(db, today);
-      router.replace('/entry/review');
+      if (isEditing) {
+        // Update existing entry
+        const { updateEntryContent } = await import('../../lib/database');
+        await updateEntryContent(db, editId!, {
+          worked_on: draft.worked_on,
+          hardest_problem: draft.hardest_problem,
+          how_solved: draft.how_solved,
+          confidence: draft.confidence,
+          mood: draft.mood,
+        });
+        router.back();
+      } else {
+        // Create new entry
+        updateDraft({ date: today });
+        await submitEntry(db);
+        await recordEntry(db, today);
+        router.replace('/entry/review');
+      }
     } catch (e) {
       setSubmitted(false);
       Alert.alert('Error', 'Failed to save entry. Please try again.');
@@ -63,7 +78,7 @@ export default function NewEntryScreen() {
           keyboardDismissMode="on-drag"
         >
           <ScreenHeader
-            title="New Entry"
+            title={isEditing ? 'Edit Entry' : 'New Entry'}
             subtitle={today}
             onBack={() => router.back()}
           />
@@ -131,7 +146,7 @@ export default function NewEntryScreen() {
           {/* Submit */}
           <View style={styles.submitArea}>
             <Button
-              title={loading || submitted ? 'Saving…' : 'Submit for Review'}
+              title={loading || submitted ? 'Saving…' : isEditing ? 'Save Changes' : 'Submit for Review'}
               onPress={handleSubmit}
               disabled={!canSubmit || loading || submitted}
             />

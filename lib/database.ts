@@ -329,6 +329,35 @@ export async function getRecentEntries(db: SQLiteDatabase, limit: number = 30): 
   return rows.map(rowToEntry);
 }
 
+export async function updateEntryContent(
+  db: SQLiteDatabase,
+  id: string,
+  content: {
+    worked_on: string;
+    hardest_problem: string | null;
+    how_solved: string | null;
+    confidence: number;
+    mood: number;
+  }
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE entries SET
+       worked_on = ?,
+       hardest_problem = ?,
+       how_solved = ?,
+       confidence = ?,
+       mood = ?,
+       updated_at = datetime('now')
+     WHERE id = ?`,
+    content.worked_on,
+    content.hardest_problem,
+    content.how_solved,
+    content.confidence,
+    content.mood,
+    id
+  );
+}
+
 export async function updateEntryReview(
   db: SQLiteDatabase,
   id: string,
