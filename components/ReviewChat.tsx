@@ -182,11 +182,7 @@ export function ReviewChat({
   }, [messages.length, isTyping]);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 10 : 0}
-    >
+    <View style={styles.flex}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>AI REVIEW</Text>
@@ -200,7 +196,6 @@ export function ReviewChat({
         contentContainerStyle={styles.messagesContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
       >
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
@@ -209,41 +204,46 @@ export function ReviewChat({
       </ScrollView>
 
       {/* Input area */}
-      {!reviewComplete ? (
-        <Pressable style={styles.inputArea} onPress={Keyboard.dismiss}>
-          <TextInput
-            style={styles.textInput}
-            value={inputValue}
-            onChangeText={onChangeInput}
-            placeholder={
-              inputDisabled
-                ? 'Waiting for AI...'
-                : 'Type your response...'
-            }
-            placeholderTextColor={colors.textDim}
-            multiline
-            editable={!inputDisabled}
-            textAlignVertical="top"
-          />
-          <Pressable
-            style={[
-              styles.sendButton,
-              (!inputValue.trim() || inputDisabled) && styles.sendButtonDisabled,
-            ]}
-            onPress={onSend}
-            disabled={!inputValue.trim() || inputDisabled}
-          >
-            <Text style={styles.sendButtonText}>Send</Text>
-          </Pressable>
-        </Pressable>
-      ) : (
-        <View style={styles.inputArea}>
-          <Pressable style={styles.viewResultsButton} onPress={onViewResults}>
-            <Text style={styles.viewResultsText}>View Results</Text>
-          </Pressable>
-        </View>
-      )}
-    </KeyboardAvoidingView>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 60 : 0}
+      >
+        {!reviewComplete ? (
+          <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+            <TextInput
+              style={styles.textInput}
+              value={inputValue}
+              onChangeText={onChangeInput}
+              placeholder={
+                inputDisabled
+                  ? 'Waiting for AI...'
+                  : 'Type your response...'
+              }
+              placeholderTextColor={colors.textDim}
+              multiline
+              editable={!inputDisabled}
+              textAlignVertical="top"
+            />
+            <Pressable
+              style={[
+                styles.sendButton,
+                (!inputValue.trim() || inputDisabled) && styles.sendButtonDisabled,
+              ]}
+              onPress={onSend}
+              disabled={!inputValue.trim() || inputDisabled}
+            >
+              <Text style={styles.sendButtonText}>Send</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+            <Pressable style={styles.viewResultsButton} onPress={onViewResults}>
+              <Text style={styles.viewResultsText}>View Results</Text>
+            </Pressable>
+          </View>
+        )}
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
