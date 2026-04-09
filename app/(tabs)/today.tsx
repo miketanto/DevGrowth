@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useMemo, useCallback, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { PlusIcon, ZapIcon, TrophyIcon, TargetIcon } from '../../components/icon
 import { useUserStore } from '../../store/useUserStore';
 import { useEntryStore } from '../../store/useEntryStore';
 import { useSkillStore } from '../../store/useSkillStore';
+import { getOrGenerateInsight, type Insight } from '../../lib/ai/insights';
 
 /** Get Monday-to-Sunday date strings for the week containing `today`. */
 function getWeekDates(today: string): string[] {
@@ -41,6 +42,14 @@ function formatDisplayDate(dateStr: string): string {
   return `${days[date.getUTCDay()]}, ${months[date.getUTCMonth()]} ${d}`;
 }
 
+function formatPeriodLabel(start: string, end: string): string {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const [, sm, sd] = start.split('-').map(Number);
+  const [, em, ed] = end.split('-').map(Number);
+  if (sm === em) return `${months[sm - 1]} ${sd}–${ed}`;
+  return `${months[sm - 1]} ${sd} – ${months[em - 1]} ${ed}`;
+}
+
 export default function TodayScreen() {
   const router = useRouter();
   const db = useSQLiteContext();
@@ -58,10 +67,27 @@ export default function TodayScreen() {
   const skills = useSkillStore((s) => s.skills);
   const hydrateSkills = useSkillStore((s) => s.hydrate);
 
+  const [insight, setInsight] = useState<Insight | null>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+
   useEffect(() => {
     hydrateUser(db);
     hydrateEntries(db);
     hydrateSkills(db);
+  }, [db]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setInsightLoading(true);
+    getOrGenerateInsight(db)
+      .then((result) => {
+        if (!cancelled) setInsight(result);
+      })
+      .catch((err) => console.error('[Insights] generation failed:', err))
+      .finally(() => {
+        if (!cancelled) setInsightLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [db]);
 
   const today = new Date().toISOString().split('T')[0];
@@ -170,6 +196,36 @@ export default function TodayScreen() {
             Log your first dev session to start tracking your growth.
           </Text>
         </Card>
+      )}
+
+      {/* AI Insights */}
+      {insightLoading && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>INSIGHTS</Text>
+          <Card style={styles.insightCard}>
+            <ActivityIndicator color={colors.blue} size="small" />
+            <Text style={styles.insightLoading}>Generating insights…</Text>
+          </Card>
+        </View>
+      )}
+      {!insightLoading && insight && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>INSIGHTS</Text>
+          <Card style={styles.insightCard}>
+            <Text style={styles.insightPeriod}>
+              {formatPeriodLabel(insight.periodStart, insight.periodEnd)}
+            </Text>
+            {insight.bullets.map((bullet, i) => (
+              <View key={i} style={styles.insightBulletRow}>
+                <Text style={styles.insightBulletDot}>•</Text>
+                <Text style={styles.insightBulletText}>{bullet}</Text>
+              </View>
+            ))}
+            <Text style={styles.insightGenDate}>
+              Generated {new Date(insight.generatedAt).toLocaleDateString()}
+            </Text>
+          </Card>
+        </View>
       )}
 
       {/* Yesterday's summary */}
@@ -288,5 +344,45 @@ const styles = StyleSheet.create({
   summaryMeta: {
     flexDirection: 'row',
     marginTop: spacing.md,
+  },
+  insightCard: {
+    gap: spacing.md,
+    borderLeftWidth: 2,
+    borderLeftColor: colors.blue,
+  },
+  insightLoading: {
+    fontFamily: fontFamily.sans,
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  insightPeriod: {
+    fontFamily: fontFamily.mono,
+    fontSize: fontSize.xs,
+    color: colors.blue,
+    letterSpacing: 1,
+  },
+  insightBulletRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  insightBulletDot: {
+    fontFamily: fontFamily.sans,
+    fontSize: fontSize.md,
+    color: colors.blue,
+    lineHeight: fontSize.md * 1.5,
+  },
+  insightBulletText: {
+    fontFamily: fontFamily.sans,
+    fontSize: fontSize.md,
+    color: colors.textSoft,
+    lineHeight: fontSize.md * 1.5,
+    flex: 1,
+  },
+  insightGenDate: {
+    fontFamily: fontFamily.mono,
+    fontSize: fontSize.xs,
+    color: colors.textDim,
+    marginTop: spacing.xs,
   },
 });
