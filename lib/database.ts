@@ -121,6 +121,15 @@ CREATE TABLE IF NOT EXISTS resource_match_cache (
   created_at TEXT DEFAULT (datetime('now')),
   expires_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS insights (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  bullets TEXT NOT NULL,
+  generated_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_insights_period ON insights(period_end DESC);
 `;
 
 // ---------------------------------------------------------------------------
@@ -679,4 +688,53 @@ export async function getDistinctEntryDates(db: SQLiteDatabase): Promise<string[
     'SELECT DISTINCT date FROM entries ORDER BY date DESC'
   );
   return rows.map((r) => r.date);
+}
+
+// ---------------------------------------------------------------------------
+// Insights CRUD
+// ---------------------------------------------------------------------------
+
+export interface InsightRow {
+  id: string;
+  period_start: string;
+  period_end: string;
+  bullets: string; // JSON array of strings
+  generated_at: string;
+}
+
+export async function getLatestInsight(db: SQLiteDatabase): Promise<InsightRow | null> {
+  const row = await db.getFirstAsync<InsightRow>(
+    'SELECT * FROM insights ORDER BY period_end DESC LIMIT 1'
+  );
+  return row ?? null;
+}
+
+export async function saveInsight(
+  db: SQLiteDatabase,
+  insight: { period_start: string; period_end: string; bullets: string[] }
+): Promise<string> {
+  const result = await db.runAsync(
+    `INSERT INTO insights (period_start, period_end, bullets) VALUES (?, ?, ?)`,
+    insight.period_start,
+    insight.period_end,
+    JSON.stringify(insight.bullets)
+  );
+  const row = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM insights WHERE rowid = ?',
+    result.lastInsertRowId
+  );
+  return row!.id;
+}
+
+export async function getEntriesInRange(
+  db: SQLiteDatabase,
+  startDate: string,
+  endDate: string
+): Promise<Entry[]> {
+  const rows = await db.getAllAsync<EntryRow>(
+    `SELECT * FROM entries WHERE date >= ? AND date <= ? ORDER BY date ASC`,
+    startDate,
+    endDate
+  );
+  return rows.map(rowToEntry);
 }

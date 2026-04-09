@@ -1,7 +1,8 @@
 export type AITaskType =
   | 'followup_generation'
   | 'skill_extraction'
-  | 'reflection_scoring';
+  | 'reflection_scoring'
+  | 'insight_generation';
 
 export interface ModelConfig {
   modelId: string;
@@ -24,6 +25,11 @@ const MODEL_MAP: Record<AITaskType, ModelConfig> = {
     modelId: 'claude-sonnet-4-6',
     maxTokens: 512,
     temperature: 0.3,
+  },
+  insight_generation: {
+    modelId: 'claude-sonnet-4-6',
+    maxTokens: 1024,
+    temperature: 0.5,
   },
 };
 
