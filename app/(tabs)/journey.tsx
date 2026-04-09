@@ -417,7 +417,7 @@ export default function JourneyScreen() {
                       entry={item.entry}
                       skills={item.skills}
                       onPress={() =>
-                        router.push(`/entry/view?id=${item.entry.id}`)
+                        router.push({ pathname: '/entry/view', params: { entryId: item.entry.id } })
                       }
                     />
                   </View>
