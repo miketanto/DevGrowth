@@ -206,7 +206,7 @@ export function ReviewChat({
       {/* Input area */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 60 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         {!reviewComplete ? (
           <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
