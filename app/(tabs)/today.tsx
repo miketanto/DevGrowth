@@ -94,9 +94,39 @@ export default function TodayScreen() {
   const totalEntries = entries.length;
   const hasEntries = totalEntries > 0;
 
-  const handleLogToday = useCallback(() => {
-    router.push('/entry/new');
-  }, [router]);
+  // Today's entry (if exists)
+  const todayEntry = useMemo(
+    () => entries.find((e) => e.date === today) ?? null,
+    [entries, today],
+  );
+
+  const handleLogToday = useCallback(async () => {
+    if (loggedToday && todayEntry) {
+      // Show results for existing entry
+      if (todayEntry.review_score_composite) {
+        // Review already completed — show score screen
+        const data = JSON.stringify({
+          scores: {
+            depth: todayEntry.review_score_depth ?? 0,
+            self_awareness: todayEntry.review_score_awareness ?? 0,
+            actionability: todayEntry.review_score_actionability ?? 0,
+            composite: todayEntry.review_score_composite ?? 0,
+          },
+          xp_breakdown: { base: 10, followups: 0, depth_bonus: 0 },
+          extracted_skills: [],
+          summary: todayEntry.ai_summary ?? '',
+        });
+        router.push({ pathname: '/entry/score', params: { data } });
+      } else {
+        // Entry exists but no review yet — set active and go to review
+        const { setActiveEntry } = useEntryStore.getState();
+        await setActiveEntry(db, todayEntry.id);
+        router.push('/entry/review');
+      }
+    } else {
+      router.push('/entry/new');
+    }
+  }, [router, loggedToday, todayEntry]);
 
   return (
     <ScrollView
