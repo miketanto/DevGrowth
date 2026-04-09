@@ -23,6 +23,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  runOnJS,
 } from 'react-native-reanimated';
 import type { SkillNode, SkillEdge } from '../lib/skill-graph';
 import { BRANCH_COLORS, normalizeEdgeWeights } from '../lib/skill-graph';
@@ -118,16 +119,13 @@ export function SkillConstellation({
       translateY.value = savedTranslateY.value + e.translationY;
     });
 
-  const tap = Gesture.Tap()
-    .onEnd((e) => {
-      const svgX = (e.x - translateX.value) / scale.value;
-      const svgY = (e.y - translateY.value) / scale.value;
-
+  const handleNodeSelect = useCallback(
+    (x: number, y: number) => {
       let closest: SkillNode | null = null;
       let closestDist = Infinity;
       for (const node of nodes) {
-        const dx = node.x - svgX;
-        const dy = node.y - svgY;
+        const dx = node.x - x;
+        const dy = node.y - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < node.radius + 16 && dist < closestDist) {
           closest = node;
@@ -135,6 +133,16 @@ export function SkillConstellation({
         }
       }
       onSelectNode(closest?.id ?? null);
+    },
+    [nodes, onSelectNode]
+  );
+
+  const tap = Gesture.Tap()
+    .onEnd((e) => {
+      'worklet';
+      const svgX = (e.x - translateX.value) / scale.value;
+      const svgY = (e.y - translateY.value) / scale.value;
+      runOnJS(handleNodeSelect)(svgX, svgY);
     });
 
   const composed = Gesture.Race(tap, Gesture.Simultaneous(pinch, pan));
