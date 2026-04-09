@@ -118,7 +118,26 @@ export function SkillConstellation({
       translateY.value = savedTranslateY.value + e.translationY;
     });
 
-  const composed = Gesture.Simultaneous(pinch, pan);
+  const tap = Gesture.Tap()
+    .onEnd((e) => {
+      const svgX = (e.x - translateX.value) / scale.value;
+      const svgY = (e.y - translateY.value) / scale.value;
+
+      let closest: SkillNode | null = null;
+      let closestDist = Infinity;
+      for (const node of nodes) {
+        const dx = node.x - svgX;
+        const dy = node.y - svgY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < node.radius + 16 && dist < closestDist) {
+          closest = node;
+          closestDist = dist;
+        }
+      }
+      onSelectNode(closest?.id ?? null);
+    });
+
+  const composed = Gesture.Race(tap, Gesture.Simultaneous(pinch, pan));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -127,33 +146,6 @@ export function SkillConstellation({
       { scale: scale.value },
     ],
   }));
-
-  // ---- Tap handler (find closest node) ----
-  const handleTap = useCallback(
-    (evt: any) => {
-      const { locationX, locationY } = evt.nativeEvent;
-      // Adjust for current transform
-      const s = scale.value;
-      const tx = translateX.value;
-      const ty = translateY.value;
-      const svgX = (locationX - tx) / s;
-      const svgY = (locationY - ty) / s;
-
-      let closest: SkillNode | null = null;
-      let closestDist = Infinity;
-      for (const node of nodes) {
-        const dx = node.x - svgX;
-        const dy = node.y - svgY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < node.radius + 12 && dist < closestDist) {
-          closest = node;
-          closestDist = dist;
-        }
-      }
-      onSelectNode(closest?.id ?? null);
-    },
-    [nodes, onSelectNode, scale, translateX, translateY]
-  );
 
   // ---- Distance-based opacity (fade nodes far from center) ----
   const getNodeOpacity = useCallback(
@@ -178,7 +170,6 @@ export function SkillConstellation({
       <GestureDetector gesture={composed}>
         <Animated.View
           style={[{ width, height }, animatedStyle]}
-          onTouchEnd={handleTap}
         >
           <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             {/* Ambient stars */}
