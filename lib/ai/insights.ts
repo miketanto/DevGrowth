@@ -129,14 +129,19 @@ export async function getOrGenerateInsight(
 
   let bullets: string[];
   try {
-    bullets = JSON.parse(result.text);
+    // Extract JSON array from response (may be wrapped in markdown code block)
+    const jsonMatch = result.text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('No JSON array found');
+    bullets = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(bullets)) throw new Error('Not an array');
+    bullets = bullets.filter((b): b is string => typeof b === 'string');
   } catch {
     // Fallback: split by newlines if JSON parsing fails
     bullets = result.text
+      .replace(/```[\s\S]*?```/g, '') // strip code blocks
       .split('\n')
-      .map((l) => l.replace(/^[-•*]\s*/, '').trim())
-      .filter(Boolean)
+      .map((l) => l.replace(/^[-•*"\d.]\s*/, '').trim())
+      .filter((l) => l.length > 10)
       .slice(0, 3);
   }
 
