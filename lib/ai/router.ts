@@ -11,7 +11,7 @@ export interface ModelConfig {
 
 const MODEL_MAP: Record<AITaskType, ModelConfig> = {
   followup_generation: {
-    modelId: 'claude-sonnet-4-5-20250514',
+    modelId: 'claude-sonnet-4-6',
     maxTokens: 1024,
     temperature: 0.7,
   },
@@ -21,7 +21,7 @@ const MODEL_MAP: Record<AITaskType, ModelConfig> = {
     temperature: 0.2,
   },
   reflection_scoring: {
-    modelId: 'claude-sonnet-4-5-20250514',
+    modelId: 'claude-sonnet-4-6',
     maxTokens: 512,
     temperature: 0.3,
   },

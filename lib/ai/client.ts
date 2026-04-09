@@ -122,7 +122,7 @@ function estimateCost(
 ): number {
   // Per-million-token pricing (approximate)
   const pricing: Record<string, { input: number; output: number }> = {
-    'claude-sonnet-4-5-20250514': { input: 3, output: 15 },
+    'claude-sonnet-4-6': { input: 3, output: 15 },
     'claude-haiku-4-5-20251001': { input: 0.8, output: 4 },
   };
   const rate = pricing[model] ?? { input: 3, output: 15 };
