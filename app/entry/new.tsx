@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   ScrollView,
+  InputAccessoryView,
   KeyboardAvoidingView,
   Pressable,
   Keyboard,
@@ -11,6 +12,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { ScreenHeader } from '../../components/ui/ScreenHeader';
@@ -27,6 +29,7 @@ export default function NewEntryScreen() {
   const router = useRouter();
   const { editId } = useLocalSearchParams<{ editId?: string }>();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
   const { draft, updateDraft, submitEntry, loading } = useEntryStore();
   const recordEntry = useUserStore((s) => s.recordEntry);
   const [submitted, setSubmitted] = useState(false);
@@ -69,14 +72,15 @@ export default function NewEntryScreen() {
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
     >
-      <Pressable style={styles.flex} onPress={Keyboard.dismiss}>
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+      >
           <ScreenHeader
             title={isEditing ? 'Edit Entry' : 'New Entry'}
             subtitle={today}
@@ -152,7 +156,6 @@ export default function NewEntryScreen() {
             />
           </View>
         </ScrollView>
-      </Pressable>
     </KeyboardAvoidingView>
   );
 }

@@ -11,6 +11,7 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReviewMessage } from '../types';
 import { colors } from '../theme/colors';
 import { fontFamily, fontSize } from '../theme/typography';
@@ -170,6 +171,7 @@ export function ReviewChat({
   onViewResults,
 }: ReviewChatProps) {
   const scrollRef = useRef<ScrollView>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Auto-scroll to bottom when messages change or typing starts
@@ -183,7 +185,7 @@ export function ReviewChat({
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 10 : 0}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -197,7 +199,8 @@ export function ReviewChat({
         style={styles.flex}
         contentContainerStyle={styles.messagesContent}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
       >
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
