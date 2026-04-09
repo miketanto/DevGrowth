@@ -43,7 +43,7 @@ export default function NewEntryScreen() {
       updateDraft({ date: today });
       await submitEntry(db);
       await recordEntry(db, today);
-      router.back();
+      router.replace('/entry/review');
     } catch (e) {
       setSubmitted(false);
       Alert.alert('Error', 'Failed to save entry. Please try again.');
@@ -131,7 +131,7 @@ export default function NewEntryScreen() {
           {/* Submit */}
           <View style={styles.submitArea}>
             <Button
-              title={loading || submitted ? 'Saving…' : 'Save Entry'}
+              title={loading || submitted ? 'Saving…' : 'Submit for Review'}
               onPress={handleSubmit}
               disabled={!canSubmit || loading || submitted}
             />
